@@ -153,13 +153,18 @@ def generate_feature_answer(client, model_name: str, feature_key: str, user_prom
         return None, "Unknown feature requested."
 
     system_instruction = FEATURE_PROMPTS[feature_key]
+    final_contents = (
+        "Respond now by directly following your system instructions. "
+        "Do not greet the user or introduce yourself - start straight "
+        "with the first required section heading.\n\n" + user_prompt
+    )
 
     try:
         from google.genai import types
 
         response = client.models.generate_content(
             model=model_name,
-            contents=user_prompt,
+            contents=final_contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 temperature=0.4,
