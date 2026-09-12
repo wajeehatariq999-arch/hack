@@ -211,26 +211,36 @@ CUSTOM_CSS = """
     }
 
     .result-card {
-        background: var(--spg-card);
-        border: 1px solid #E3ECEA;
-        border-left: 5px solid var(--spg-accent);
-        border-radius: 14px;
-        padding: 1.4rem 1.5rem;
-        margin-top: 1.2rem;
-        box-shadow: 0 4px 16px rgba(15,94,86,0.06);
-        line-height: 1.6;
-    }
+    background: var(--spg-card);
+    color: var(--spg-text) !important;
+    border: 1px solid #E3ECEA;
+    border-left: 5px solid var(--spg-accent);
+    border-radius: 14px;
+    padding: 1.4rem 1.5rem;
+    margin-top: 1.2rem;
+    box-shadow: 0 4px 16px rgba(15,94,86,0.06);
+    line-height: 1.6;
+}
+.result-card *,
+.result-card strong,
+.result-card p,
+.result-card li {
+    color: var(--spg-text) !important;
+}
 
     .emergency-card {
-        background: var(--spg-danger-bg);
-        border: 1px solid var(--spg-danger);
-        border-left: 6px solid var(--spg-danger);
-        border-radius: 14px;
-        padding: 1.4rem 1.5rem;
-        margin-top: 1.2rem;
-        color: #7B241C;
-        line-height: 1.6;
-    }
+    background: var(--spg-danger-bg);
+    border: 1px solid var(--spg-danger);
+    border-left: 6px solid var(--spg-danger);
+    border-radius: 14px;
+    padding: 1.4rem 1.5rem;
+    margin-top: 1.2rem;
+    color: #7B241C !important;
+    line-height: 1.6;
+}
+.emergency-card * {
+    color: #7B241C !important;
+}
 
     .stTextInput>div>div>input,
     .stTextArea textarea,
