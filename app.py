@@ -125,34 +125,70 @@ CUSTOM_CSS = """
         letter-spacing: 0.3px;
     }
 
+    .spg-card-wrap {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        margin-bottom: 1.4rem;
+    }
     .spg-card {
         background: var(--spg-card);
-        border-radius: 16px;
+        border-radius: 16px 16px 0 0;
         border: 1px solid #E3ECEA;
-        padding: 1.4rem 1.4rem 1.2rem 1.4rem;
+        border-bottom: none;
+        padding: 1.5rem 1.5rem 1.1rem 1.5rem;
         box-shadow: 0 4px 16px rgba(15,94,86,0.06);
-        height: 100%;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        min-height: 190px;
+        display: flex;
+        flex-direction: column;
+        transition: box-shadow 0.15s ease;
     }
-    .spg-card:hover {
-        transform: translateY(-3px);
+    .spg-card-wrap:hover .spg-card {
         box-shadow: 0 10px 24px rgba(15,94,86,0.14);
     }
-    .spg-card .icon {
-        font-size: 1.8rem;
-        margin-bottom: 0.5rem;
+    .spg-card .icon-badge {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        background: var(--spg-teal-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        margin-bottom: 0.7rem;
     }
     .spg-card h3 {
         font-size: 1.05rem;
         font-weight: 700;
-        margin-bottom: 0.35rem;
+        margin-bottom: 0.4rem;
         color: var(--spg-teal-dark);
+        line-height: 1.3;
     }
     .spg-card p {
-        font-size: 0.88rem;
+        font-size: 0.87rem;
         color: var(--spg-muted);
-        line-height: 1.45;
+        line-height: 1.5;
         margin-bottom: 0;
+    }
+    .spg-card-wrap .stButton {
+        margin-top: 0 !important;
+    }
+    .spg-card-wrap .stButton>button {
+        width: 100%;
+        border-radius: 0 0 16px 16px !important;
+        border: 1px solid #E3ECEA !important;
+        border-top: 1px dashed #D3E4E0 !important;
+        background: var(--spg-teal-light) !important;
+        color: var(--spg-teal-dark) !important;
+        font-weight: 600;
+        padding: 0.55rem 1rem !important;
+        box-shadow: none !important;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+    .spg-card-wrap .stButton>button:hover {
+        background: var(--spg-teal-mid) !important;
+        color: #FFFFFF !important;
+        transform: none !important;
     }
 
     .feature-header {
@@ -351,25 +387,26 @@ def render_home():
     ]
 
     row1 = st.columns(3)
-    row2 = st.columns(2)
+    row2 = st.columns(3)
     cols = row1 + row2
 
     for col, (key, icon, title, desc) in zip(cols, cards):
         with col:
             st.markdown(
                 f"""
+                <div class="spg-card-wrap">
                 <div class="spg-card">
-                    <div class="icon">{icon}</div>
+                    <div class="icon-badge">{icon}</div>
                     <h3>{title}</h3>
                     <p>{desc}</p>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
-            st.write("")
             if st.button("Open →", key=f"open_{key}", use_container_width=True):
                 go_to(key)
                 st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown(
         '<div class="spg-disclaimer">⚠️ SPG is an educational tool only. '
