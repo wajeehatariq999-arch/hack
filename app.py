@@ -8,7 +8,7 @@ sidebar navigation, hero/home page, and the five feature pages.
 """
 
 import streamlit as st
-from ai_service import run_feature, get_api_key
+from ai_service import run_feature
 
 # ------------------------------------------------------------------
 # PAGE CONFIG (must be the first Streamlit call)
@@ -268,10 +268,6 @@ with st.sidebar:
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("---")
-    if get_api_key():
-        st.success("Gemini API key detected ✅", icon="✅")
-    else:
-        st.warning("Gemini API key missing ⚠️", icon="⚠️")
 
     st.markdown(
         '<div class="spg-disclaimer">SPG provides general educational '
