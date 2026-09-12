@@ -32,10 +32,12 @@ from prompts import (
 )
 from safety import check_relevance, check_emergency
 
-# Fast + high daily-limit model. Other options:
-#   "llama-3.1-8b-instant"   -> even faster, smallest, highest RPD
-#   "llama-3.3-70b-versatile"-> smarter, still fast, good default
-DEFAULT_MODEL = "llama-3.3-70b-versatile"
+# NOTE: llama-3.1-8b-instant and llama-3.3-70b-versatile were
+# decommissioned by Groq on 2026-08-16. Using their recommended
+# replacements below. Other options:
+#   "openai/gpt-oss-20b"  -> smaller/faster, replaces llama-3.1-8b-instant
+#   "qwen/qwen3.6-27b"    -> alternative replacement for llama-3.3-70b-versatile
+DEFAULT_MODEL = "openai/gpt-oss-120b"
 REQUEST_TIMEOUT_SECONDS = 30
 
 
