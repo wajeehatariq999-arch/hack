@@ -1,12 +1,15 @@
 """
 ai_service.py
 ------------------------------------------------------------
-All communication with the Google Gemini API goes through this
-file. It uses the current official Google Gen AI Python SDK
-(package name: "google-genai", imported as "from google import genai").
+All communication with the Groq API goes through this file.
+It uses the official Groq Python SDK (package name: "groq").
+
+Function names/signatures are kept IDENTICAL to the previous
+Gemini version (call_gemini_raw, get_client, run_feature, etc.)
+so that app.py and safety.py do not need any changes.
 
 Responsibilities:
-  - Build/cache a Gemini client from the API key in Streamlit secrets.
+  - Build/cache a Groq client from the API key in Streamlit secrets.
   - Provide a low-level `call_gemini_raw` used by safety.py for the
     relevance/emergency classification calls.
   - Provide a high-level `run_feature` that performs the full
@@ -29,7 +32,10 @@ from prompts import (
 )
 from safety import check_relevance, check_emergency
 
-DEFAULT_MODEL = "gemini-3.6-flash"
+# Fast + high daily-limit model. Other options:
+#   "llama-3.1-8b-instant"   -> even faster, smallest, highest RPD
+#   "llama-3.3-70b-versatile"-> smarter, still fast, good default
+DEFAULT_MODEL = "llama-3.3-70b-versatile"
 REQUEST_TIMEOUT_SECONDS = 30
 
 
@@ -38,15 +44,15 @@ REQUEST_TIMEOUT_SECONDS = 30
 # ------------------------------------------------------------------
 def get_api_key() -> str | None:
     """
-    Reads the Gemini API key from Streamlit secrets.
+    Reads the Groq API key from Streamlit secrets.
     Returns None if it is missing or still the placeholder value.
     """
     try:
-        api_key = st.secrets["GEMINI_API_KEY"]
+        api_key = st.secrets["GROQ_API_KEY"]
     except Exception:
         return None
 
-    if not api_key or "ENTER_YOUR_GEMINI_API_KEY_HERE" in api_key:
+    if not api_key or "ENTER_YOUR_GROQ_API_KEY_HERE" in api_key:
         return None
 
     return api_key
@@ -55,12 +61,12 @@ def get_api_key() -> str | None:
 @st.cache_resource(show_spinner=False)
 def get_client(api_key: str):
     """
-    Creates (and caches) a Gemini API client for the given key.
+    Creates (and caches) a Groq API client for the given key.
     Cached by Streamlit so we don't reconnect on every rerun.
     """
-    from google import genai
+    from groq import Groq
 
-    return genai.Client(api_key=api_key)
+    return Groq(api_key=api_key)
 
 
 def _friendly_error_from_exception(exc: Exception) -> str:
@@ -72,13 +78,13 @@ def _friendly_error_from_exception(exc: Exception) -> str:
 
     if "api key" in text or "api_key" in text or "unauthorized" in text or "permission" in text or "401" in text:
         return (
-            "Your Gemini API key seems to be missing or invalid. "
+            "Your Groq API key seems to be missing or invalid. "
             "Please check the key in `.streamlit/secrets.toml` "
             "(or in Streamlit Cloud Secrets) and try again."
         )
-    if "quota" in text or "rate limit" in text or "429" in text or "resource_exhausted" in text:
+    if "quota" in text or "rate limit" in text or "429" in text or "resource_exhausted" in text or "rate_limit_exceeded" in text:
         return (
-            "SPG has hit the Gemini API rate limit or quota for now. "
+            "SPG has hit the Groq API rate limit or quota for now. "
             "Please wait a short while and try again."
         )
     if "timeout" in text or "timed out" in text or "deadline" in text:
@@ -88,13 +94,18 @@ def _friendly_error_from_exception(exc: Exception) -> str:
         )
     if "network" in text or "connection" in text or "dns" in text or "unreachable" in text:
         return (
-            "SPG couldn't reach the Gemini API. Please check your "
+            "SPG couldn't reach the Groq API. Please check your "
             "internet connection and try again."
         )
-    if "safety" in text or "blocked" in text or "recitation" in text:
+    if "safety" in text or "blocked" in text or "content_filter" in text or "recitation" in text:
         return (
             "The AI service was unable to generate a response for this "
             "specific input. Please rephrase your question and try again."
+        )
+    if "model" in text and ("not found" in text or "does not exist" in text or "decommissioned" in text):
+        return (
+            "The selected AI model is unavailable right now. Please try "
+            "again shortly, or contact the app owner to update the model name."
         )
 
     return (
@@ -109,7 +120,9 @@ def _friendly_error_from_exception(exc: Exception) -> str:
 # ------------------------------------------------------------------
 def call_gemini_raw(client, model_name: str, prompt_text: str) -> tuple[str | None, str | None]:
     """
-    Sends a single prompt to Gemini and returns the raw text response.
+    Sends a single prompt to Groq and returns the raw text response.
+    (Name kept as "call_gemini_raw" for compatibility with safety.py —
+    it now talks to Groq under the hood.)
 
     Returns:
         (text, error_message)
@@ -119,17 +132,13 @@ def call_gemini_raw(client, model_name: str, prompt_text: str) -> tuple[str | No
         return None, "No AI client is configured (missing API key)."
 
     try:
-        from google.genai import types
-
-        response = client.models.generate_content(
+        response = client.chat.completions.create(
             model=model_name,
-            contents=prompt_text,
-            config=types.GenerateContentConfig(
-                temperature=0.0,
-                max_output_tokens=20,
-            ),
+            messages=[{"role": "user", "content": prompt_text}],
+            temperature=0.0,
+            max_tokens=20,
         )
-        text = getattr(response, "text", None)
+        text = response.choices[0].message.content
         if not text:
             return None, "The AI service returned an empty response."
         return text, None
@@ -160,18 +169,16 @@ def generate_feature_answer(client, model_name: str, feature_key: str, user_prom
     )
 
     try:
-        from google.genai import types
-
-        response = client.models.generate_content(
+        response = client.chat.completions.create(
             model=model_name,
-            contents=final_contents,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                temperature=0.4,
-                max_output_tokens=1024,
-            ),
+            messages=[
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": final_contents},
+            ],
+            temperature=0.4,
+            max_tokens=1024,
         )
-        text = getattr(response, "text", None)
+        text = response.choices[0].message.content
         if not text:
             return None, "The AI service returned an empty response. Please try again."
         return text, None
@@ -201,7 +208,7 @@ def run_feature(feature_key: str, user_prompt: str, raw_user_text: str) -> dict:
         return {
             "status": "error",
             "message": (
-                "⚠️ No valid Gemini API key found. Please add your key to "
+                "⚠️ No valid Groq API key found. Please add your key to "
                 "`.streamlit/secrets.toml` (locally) or to your app's "
                 "Secrets (on Streamlit Cloud), then restart the app."
             ),
