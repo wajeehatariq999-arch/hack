@@ -29,7 +29,7 @@ from prompts import (
 )
 from safety import check_relevance, check_emergency
 
-DEFAULT_MODEL = "gemini-2.5-flash"
+DEFAULT_MODEL = "gemini-3.6-flash"
 REQUEST_TIMEOUT_SECONDS = 30
 
 
