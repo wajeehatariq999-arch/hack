@@ -9,7 +9,7 @@ sidebar navigation, hero/home page, and the five feature pages.
 
 import streamlit as st
 from ai_service import run_feature
-
+from auth import require_login, render_sidebar_user
 # ------------------------------------------------------------------
 # PAGE CONFIG (must be the first Streamlit call)
 # ------------------------------------------------------------------
@@ -273,6 +273,7 @@ CUSTOM_CSS = """
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+user = require_login()
 
 # ------------------------------------------------------------------
 # NAVIGATION STATE
@@ -313,7 +314,9 @@ with st.sidebar:
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("---")
+        render_sidebar_user()
+
+        st.markdown("---")
 
     st.markdown(
         '<div class="spg-disclaimer">SPG provides general educational '
