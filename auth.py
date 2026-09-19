@@ -2,7 +2,7 @@
 auth.py
 ------------------------------------------------------------
 SPG - Smart Pharma Guider
-Sign Up / Sign In system.
+Sign Up / Sign In system (v2 - redesigned UI).
 
 - Users are stored in a local SQLite file (users.db).
 - Passwords are never stored as plain text: each one is salted and
@@ -134,93 +134,230 @@ def logout():
 
 
 # ------------------------------------------------------------------
-# STYLES
+# STYLES - login / sign-up page
 # ------------------------------------------------------------------
 AUTH_CSS = """
 <style>
+/* ---------- hide sidebar on the login page ---------- */
 section[data-testid="stSidebar"],
 [data-testid="stSidebarCollapsedControl"],
 [data-testid="collapsedControl"] { display: none !important; }
 
-.block-container { max-width: 1080px; padding-top: 2.6rem; }
+/* ---------- page background: soft mint glow + two floating capsules ---------- */
+.stApp {
+    background:
+        radial-gradient(900px 520px at 6% 0%, #D3F0E8 0%, rgba(211,240,232,0) 65%),
+        radial-gradient(820px 540px at 100% 100%, #C9E9E1 0%, rgba(201,233,225,0) 65%),
+        #F3FAF8 !important;
+}
+.stApp::before, .stApp::after {
+    content: ""; position: fixed; z-index: 0; pointer-events: none;
+    border-radius: 999px; opacity: 0.6;
+    background: linear-gradient(90deg, #A6DFD1 50%, #E4F3F0 50%);
+}
+.stApp::before { width: 200px; height: 74px; top: 6%;    right: 3%; transform: rotate(-28deg); }
+.stApp::after  { width: 160px; height: 60px; bottom: 7%; left: 2%;  transform: rotate(32deg); }
+.block-container {
+    position: relative; z-index: 1;
+    max-width: 1120px; padding-top: 2.8rem; padding-bottom: 2rem;
+}
 
-.auth-brand {
-    background: linear-gradient(160deg, var(--spg-teal-dark) 0%, var(--spg-teal) 100%);
-    border-radius: 20px;
-    padding: 2.6rem 2.3rem;
-    min-height: 590px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    box-shadow: 0 10px 30px rgba(11,61,58,0.25);
+/* ---------- one big split card (left brand panel + right form) ---------- */
+[data-testid="stHorizontalBlock"] {
+    gap: 0 !important;
+    align-items: stretch !important;
+    background: #FFFFFF;
+    border: 1px solid #E3ECEA;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px -24px rgba(11,61,58,0.40), 0 8px 20px rgba(15,94,86,0.08);
 }
+[data-testid="stHorizontalBlock"] > div { min-width: 0; }
+
+/* left column = deep teal brand panel */
+[data-testid="stHorizontalBlock"] > div:first-child {
+    position: relative; overflow: hidden;
+    padding: 2.6rem 2.5rem;
+    display: flex; flex-direction: column; justify-content: center;
+    background:
+        radial-gradient(520px 320px at 100% 0%, rgba(47,191,161,0.38), rgba(47,191,161,0) 70%),
+        radial-gradient(420px 300px at 0% 100%, rgba(47,191,161,0.18), rgba(47,191,161,0) 70%),
+        linear-gradient(165deg, #0B3D3A 0%, #0F5E56 60%, #147D71 100%);
+}
+/* two capsules bleeding off the panel corners */
+[data-testid="stHorizontalBlock"] > div:first-child::before,
+[data-testid="stHorizontalBlock"] > div:first-child::after {
+    content: ""; position: absolute; border-radius: 999px; pointer-events: none;
+    background: linear-gradient(90deg, #2FBFA1 50%, #F2FBF9 50%);
+}
+[data-testid="stHorizontalBlock"] > div:first-child::before {
+    width: 150px; height: 54px; top: 26px; right: -30px;
+    transform: rotate(-30deg);
+    box-shadow: inset 0 -8px 14px rgba(0,0,0,0.14), inset 0 8px 12px rgba(255,255,255,0.35),
+                0 16px 30px rgba(0,0,0,0.30);
+    animation: spg-float 6s ease-in-out infinite;
+}
+[data-testid="stHorizontalBlock"] > div:first-child::after {
+    width: 120px; height: 44px; bottom: -14px; left: -34px;
+    transform: rotate(28deg); opacity: 0.22;
+}
+@keyframes spg-float {
+    0%, 100% { transform: translateY(0)    rotate(-30deg); }
+    50%      { transform: translateY(-9px) rotate(-30deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    [data-testid="stHorizontalBlock"] > div:first-child::before { animation: none; }
+}
+
+/* right column = white form panel */
+[data-testid="stHorizontalBlock"] > div:last-child {
+    padding: 2.6rem 2.7rem;
+    display: flex; flex-direction: column; justify-content: center;
+}
+
+/* ---------- brand panel content ---------- */
+.auth-brand { position: relative; z-index: 1; }
 .auth-brand, .auth-brand * { color: #F2FBF9 !important; }
-.auth-capsule {
-    width: 150px; height: 56px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, var(--spg-accent) 50%, #F2FBF9 50%);
-    transform: rotate(-24deg);
-    margin: 0.4rem 0 2.6rem 0.4rem;
-    box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+.auth-logo { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 2.6rem; }
+.auth-logo-mark {
+    width: 44px; height: 44px; border-radius: 13px;
+    background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.24);
+    display: flex; align-items: center; justify-content: center; font-size: 1.35rem;
 }
+.auth-logo-text b     { display: block; font-size: 1.25rem; font-weight: 800; line-height: 1.1; }
+.auth-logo-text small { display: block; font-size: 0.78rem; opacity: 0.75; }
 .auth-brand h1 {
-    font-size: 2rem; font-weight: 800; line-height: 1.2;
+    font-size: 2.15rem; font-weight: 800; line-height: 1.18; letter-spacing: -0.3px;
     margin: 0 0 0.9rem 0; color: #FFFFFF !important;
 }
-.auth-brand p {
-    font-size: 1rem; line-height: 1.6; opacity: 0.92; margin: 0 0 1.6rem 0;
+.auth-brand p.lead { font-size: 1rem; line-height: 1.6; opacity: 0.9; margin: 0 0 1.5rem 0; max-width: 40ch; }
+.auth-feature {
+    display: flex; align-items: center; gap: 0.85rem;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 14px; padding: 0.7rem 0.9rem; margin-bottom: 0.6rem;
 }
-.auth-brand ul { list-style: none; padding: 0; margin: 0 0 1.8rem 0; }
-.auth-brand li {
-    position: relative; padding-left: 1.4rem; margin-bottom: 0.65rem;
-    font-size: 0.95rem;
+.auth-feature .fi {
+    flex: 0 0 38px; width: 38px; height: 38px; border-radius: 10px;
+    background: rgba(47,191,161,0.25);
+    display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
 }
-.auth-brand li::before {
-    content: ""; position: absolute; left: 0; top: 0.55em;
-    width: 8px; height: 8px; border-radius: 50%; background: var(--spg-accent);
+.auth-feature b     { display: block; font-size: 0.94rem; font-weight: 700; }
+.auth-feature small { display: block; font-size: 0.8rem; opacity: 0.78; line-height: 1.35; }
+.auth-note {
+    margin-top: 1.4rem; padding-top: 0.9rem; font-size: 0.8rem; opacity: 0.75;
+    border-top: 1px solid rgba(255,255,255,0.18); line-height: 1.5;
 }
-.auth-note { font-size: 0.8rem; opacity: 0.75; border-top: 1px solid rgba(255,255,255,0.18); padding-top: 0.9rem; }
 
-div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: var(--spg-card);
-    border: 1px solid #E3ECEA;
-    border-radius: 20px;
-    padding: 1.2rem 1.3rem 0.8rem 1.3rem;
-    box-shadow: 0 4px 16px rgba(15,94,86,0.06);
+/* ---------- form panel content ---------- */
+.auth-title { font-size: 1.8rem; font-weight: 800; color: #0B3D3A; letter-spacing: -0.2px; margin-bottom: 0.25rem; }
+.auth-sub   { font-size: 0.95rem; color: #5C7A75; margin-bottom: 1.4rem; }
+
+/* tabs -> pill switch (removes Streamlit's red underline) */
+.stTabs [data-baseweb="tab-highlight"],
+.stTabs [data-baseweb="tab-border"] { display: none !important; }
+.stTabs [data-baseweb="tab-list"] {
+    gap: 4px; padding: 5px; background: #E4F3F0; border-radius: 14px;
 }
+.stTabs [data-baseweb="tab"] {
+    flex: 1; height: 44px; justify-content: center;
+    border-radius: 10px; background: transparent;
+}
+.stTabs [data-baseweb="tab"] p { font-weight: 700; font-size: 0.97rem; color: #5C7A75; }
+.stTabs [aria-selected="true"] {
+    background: #FFFFFF !important;
+    box-shadow: 0 2px 8px rgba(15,94,86,0.16);
+}
+.stTabs [aria-selected="true"] p { color: #0F5E56 !important; }
+.stTabs [data-baseweb="tab-panel"] { padding-top: 1.3rem; }
 [data-testid="stForm"] { border: none !important; padding: 0 !important; }
 
-.auth-title { font-size: 1.6rem; font-weight: 800; color: var(--spg-teal-dark); margin-bottom: 0.2rem; }
-.auth-sub { font-size: 0.92rem; color: var(--spg-muted); margin-bottom: 0.8rem; }
+/* inputs */
+.stTextInput label p { font-weight: 600; font-size: 0.9rem; color: #16302C; }
+.stTextInput [data-baseweb="input"] {
+    background: #F7FAF9 !important;
+    border: 1.5px solid #D3E4E0 !important;
+    border-radius: 12px !important;
+    min-height: 48px;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.stTextInput [data-baseweb="input"]:focus-within {
+    background: #FFFFFF !important;
+    border-color: #2FBFA1 !important;
+    box-shadow: 0 0 0 4px rgba(47,191,161,0.18) !important;
+}
+.stTextInput [data-baseweb="base-input"] { background: transparent !important; }
+.stTextInput [data-baseweb="base-input"] input {
+    background: transparent !important; border: none !important;
+    box-shadow: none !important; font-size: 0.97rem; padding: 0.7rem 0.9rem;
+}
+.stTextInput [data-baseweb="base-input"] input::placeholder { color: #9BB3AE; }
+.stTextInput [data-baseweb="input"] button { background: transparent !important; }
 
-.stTabs [data-baseweb="tab-list"] { gap: 0.4rem; }
-.stTabs [data-baseweb="tab"] p { font-weight: 600; font-size: 0.98rem; }
-.stTabs [aria-selected="true"] p { color: var(--spg-teal-mid) !important; }
-.stTabs [data-baseweb="tab-highlight"] { background-color: var(--spg-teal-mid) !important; }
+/* main action button */
+[data-testid="stFormSubmitButton"] button,
+button[data-testid="stBaseButton-secondaryFormSubmit"],
+button[kind="secondaryFormSubmit"] {
+    width: 100%; height: 3.1rem; margin-top: 0.4rem;
+    background: linear-gradient(135deg, #147D71 0%, #0F5E56 100%) !important;
+    border: none !important; border-radius: 12px !important;
+    box-shadow: 0 10px 20px rgba(15,94,86,0.28) !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+[data-testid="stFormSubmitButton"] button p,
+button[data-testid="stBaseButton-secondaryFormSubmit"] p { color: #FFFFFF !important; font-weight: 700; font-size: 1rem; }
+[data-testid="stFormSubmitButton"] button:hover,
+button[data-testid="stBaseButton-secondaryFormSubmit"]:hover {
+    background: linear-gradient(135deg, #0F5E56 0%, #0B3D3A 100%) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px rgba(15,94,86,0.34) !important;
+}
+[data-testid="stFormSubmitButton"] button:focus-visible {
+    outline: 3px solid rgba(47,191,161,0.55); outline-offset: 2px;
+}
 
-.stTextInput label p { font-weight: 600; color: var(--spg-text); font-size: 0.9rem; }
-.stTextInput input:focus { border-color: var(--spg-accent) !important; box-shadow: 0 0 0 1px var(--spg-accent) !important; }
+[data-testid="stAlert"] { border-radius: 12px; }
 
-@media (max-width: 800px) {
-    .auth-brand { min-height: auto; padding: 1.8rem 1.4rem; }
-    .auth-capsule { margin-bottom: 1.6rem; }
+.auth-trust {
+    margin-top: 1.2rem; padding: 0.75rem 0.95rem;
+    background: #E4F3F0; border-radius: 12px;
+    font-size: 0.82rem; line-height: 1.45; color: #0F5E56;
+}
+.stApp .spg-disclaimer { text-align: center; border-top: none; margin-top: 1.4rem; }
+
+/* ---------- phones ---------- */
+@media (max-width: 640px) {
+    .block-container { padding-top: 1.2rem; }
+    .stApp::before, .stApp::after { display: none; }
+    [data-testid="stHorizontalBlock"] > div:first-child,
+    [data-testid="stHorizontalBlock"] > div:last-child { padding: 1.8rem 1.5rem; }
+    .auth-logo { margin-bottom: 1.6rem; }
+    .auth-brand h1 { font-size: 1.7rem; }
+    .auth-brand p.lead, .auth-feature, .auth-note { display: none; }
 }
 </style>
 """
 
+
+def _feature(icon: str, title: str, text: str) -> str:
+    return (
+        f'<div class="auth-feature"><span class="fi">{icon}</span>'
+        f"<div><b>{title}</b><small>{text}</small></div></div>"
+    )
+
+
 BRAND_HTML = (
     '<div class="auth-brand">'
-    '<div class="auth-capsule"></div>'
+    '<div class="auth-logo"><span class="auth-logo-mark">💊</span>'
+    '<div class="auth-logo-text"><b>SPG</b><small>Smart Pharma Guider</small></div></div>'
     "<h1>Know your medicines before you take them.</h1>"
-    "<p>SPG explains food interactions, missed doses, storage rules and "
-    "alternatives in plain language, so you can ask your pharmacist better questions.</p>"
-    "<ul>"
-    "<li>Check a medicine against food, drinks and supplements</li>"
-    "<li>Find out what to do after a missed dose</li>"
-    "<li>Learn how to store and handle your medicine</li>"
-    "</ul>"
-    '<div class="auth-note">Answers are general education only. They are not a diagnosis '
-    "and do not replace your doctor or pharmacist.</div>"
+    '<p class="lead">Plain-language answers about food interactions, missed doses, '
+    "storage and alternatives, so you can ask your pharmacist better questions.</p>"
+    + _feature("🍽️", "Food and drink checks", "See how a medicine reacts with what you eat")
+    + _feature("⏰", "Missed dose guidance", "Know what to do when you forget a dose")
+    + _feature("🔄", "Alternative options", "Compare other medicines and what differs")
+    + _feature("🧊", "Storage and handling", "Keep your medicine safe and effective")
+    + '<div class="auth-note">Answers are general education only. They are not a '
+    "diagnosis and do not replace your doctor or pharmacist.</div>"
     "</div>"
 )
 
@@ -253,9 +390,9 @@ section[data-testid="stSidebar"] .user-avatar {
 # ------------------------------------------------------------------
 def _sign_in_form():
     with st.form("signin_form"):
-        email = st.text_input("Email", placeholder="you@example.com", key="si_email")
+        email = st.text_input("✉️  Email address", placeholder="you@example.com", key="si_email")
         password = st.text_input(
-            "Password", type="password", placeholder="Your password", key="si_password"
+            "🔒  Password", type="password", placeholder="Your password", key="si_password"
         )
         submitted = st.form_submit_button("Sign in", use_container_width=True)
 
@@ -283,16 +420,16 @@ def _sign_in_form():
 
 def _sign_up_form():
     with st.form("signup_form"):
-        name = st.text_input("Full name", placeholder="e.g. Ayesha Khan", key="su_name")
-        email = st.text_input("Email", placeholder="you@example.com", key="su_email")
+        name = st.text_input("👤  Full name", placeholder="e.g. Ayesha Khan", key="su_name")
+        email = st.text_input("✉️  Email address", placeholder="you@example.com", key="su_email")
         password = st.text_input(
-            "Password",
+            "🔒  Password",
             type="password",
             placeholder=f"At least {MIN_PASSWORD_LEN} characters",
             key="su_password",
         )
         confirm = st.text_input(
-            "Confirm password",
+            "🔒  Confirm password",
             type="password",
             placeholder="Type your password again",
             key="su_confirm",
@@ -328,23 +465,27 @@ def _sign_up_form():
 # ------------------------------------------------------------------
 def _render_auth_page():
     st.markdown(AUTH_CSS, unsafe_allow_html=True)
-    left, right = st.columns(2, gap="large")
+    left, right = st.columns(2, gap="small")
 
     with left:
         st.markdown(BRAND_HTML, unsafe_allow_html=True)
 
     with right:
-        with st.container(border=True):
-            st.markdown(
-                '<div class="auth-title">Welcome to SPG</div>'
-                '<div class="auth-sub">Sign in to continue, or create an account.</div>',
-                unsafe_allow_html=True,
-            )
-            tab_in, tab_up = st.tabs(["Sign in", "Create account"])
-            with tab_in:
-                _sign_in_form()
-            with tab_up:
-                _sign_up_form()
+        st.markdown(
+            '<div class="auth-title">Welcome to SPG</div>'
+            '<div class="auth-sub">Sign in to continue, or create a new account.</div>',
+            unsafe_allow_html=True,
+        )
+        tab_in, tab_up = st.tabs(["Sign in", "Create account"])
+        with tab_in:
+            _sign_in_form()
+        with tab_up:
+            _sign_up_form()
+        st.markdown(
+            '<div class="auth-trust">🔒 Your password is salted and hashed. '
+            "SPG never stores it as plain text.</div>",
+            unsafe_allow_html=True,
+        )
 
     st.markdown(
         '<div class="spg-disclaimer">In a medical emergency, contact your local '
