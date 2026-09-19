@@ -138,6 +138,8 @@ def logout():
 # ------------------------------------------------------------------
 AUTH_CSS = """
 <style>
+:root, .stApp { color-scheme: light !important; }
+
 /* ---------- hide sidebar on the login page ---------- */
 section[data-testid="stSidebar"],
 [data-testid="stSidebarCollapsedControl"],
@@ -172,7 +174,6 @@ section[data-testid="stSidebar"],
     overflow: hidden;
     box-shadow: 0 30px 60px -24px rgba(11,61,58,0.40), 0 8px 20px rgba(15,94,86,0.08);
 }
-[data-testid="stHorizontalBlock"] > div { min-width: 0; }
 
 /* left column = deep teal brand panel */
 [data-testid="stHorizontalBlock"] > div:first-child {
@@ -253,45 +254,54 @@ section[data-testid="stSidebar"],
 .auth-sub   { font-size: 0.95rem; color: #5C7A75; margin-bottom: 1.4rem; }
 
 /* tabs -> pill switch (removes Streamlit's red underline) */
-.stTabs [data-baseweb="tab-highlight"],
-.stTabs [data-baseweb="tab-border"] { display: none !important; }
-.stTabs [data-baseweb="tab-list"] {
-    gap: 4px; padding: 5px; background: #E4F3F0; border-radius: 14px;
+[data-baseweb="tab-highlight"],
+[data-baseweb="tab-border"] { display: none !important; }
+[data-baseweb="tab-list"] {
+    gap: 4px; padding: 5px; background: #E4F3F0 !important; border-radius: 14px;
 }
-.stTabs [data-baseweb="tab"] {
+[data-baseweb="tab-list"] button[data-baseweb="tab"] {
     flex: 1; height: 44px; justify-content: center;
-    border-radius: 10px; background: transparent;
+    border-radius: 10px; background: transparent !important;
 }
-.stTabs [data-baseweb="tab"] p { font-weight: 700; font-size: 0.97rem; color: #5C7A75; }
-.stTabs [aria-selected="true"] {
-    background: #FFFFFF !important;
-    box-shadow: 0 2px 8px rgba(15,94,86,0.16);
+[data-baseweb="tab-list"] button[data-baseweb="tab"] p,
+[data-baseweb="tab-list"] button[data-baseweb="tab"] div {
+    color: #5C7A75 !important; font-weight: 700; font-size: 0.97rem;
 }
-.stTabs [aria-selected="true"] p { color: #0F5E56 !important; }
-.stTabs [data-baseweb="tab-panel"] { padding-top: 1.3rem; }
-[data-testid="stForm"] { border: none !important; padding: 0 !important; }
+[data-baseweb="tab-list"] button[aria-selected="true"] {
+    background: #FFFFFF !important; box-shadow: 0 2px 8px rgba(15,94,86,0.16);
+}
+[data-baseweb="tab-list"] button[aria-selected="true"] p,
+[data-baseweb="tab-list"] button[aria-selected="true"] div { color: #0F5E56 !important; }
+[data-baseweb="tab-panel"] { padding-top: 1.3rem; }
+[data-testid="stForm"] { border: none !important; padding: 0 !important; background: transparent !important; }
 
-/* inputs */
-.stTextInput label p { font-weight: 600; font-size: 0.9rem; color: #16302C; }
-.stTextInput [data-baseweb="input"] {
+/* inputs: always light, even when the phone is in dark mode */
+[data-testid="stWidgetLabel"] p,
+[data-testid="stTextInput"] label p { color: #16302C !important; font-weight: 600; font-size: 0.9rem; }
+div[data-baseweb="input"] {
     background: #F7FAF9 !important;
     border: 1.5px solid #D3E4E0 !important;
     border-radius: 12px !important;
     min-height: 48px;
     transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
-.stTextInput [data-baseweb="input"]:focus-within {
+div[data-baseweb="input"]:focus-within {
     background: #FFFFFF !important;
     border-color: #2FBFA1 !important;
     box-shadow: 0 0 0 4px rgba(47,191,161,0.18) !important;
 }
-.stTextInput [data-baseweb="base-input"] { background: transparent !important; }
-.stTextInput [data-baseweb="base-input"] input {
-    background: transparent !important; border: none !important;
-    box-shadow: none !important; font-size: 0.97rem; padding: 0.7rem 0.9rem;
+div[data-baseweb="input"] > div,
+div[data-baseweb="base-input"] { background: transparent !important; }
+div[data-baseweb="input"] div[data-baseweb="base-input"] input {
+    background: transparent !important; border: none !important; box-shadow: none !important;
+    color: #16302C !important; -webkit-text-fill-color: #16302C !important;
+    caret-color: #0F5E56; font-size: 0.97rem; padding: 0.7rem 0.9rem;
 }
-.stTextInput [data-baseweb="base-input"] input::placeholder { color: #9BB3AE; }
-.stTextInput [data-baseweb="input"] button { background: transparent !important; }
+div[data-baseweb="input"] input::placeholder {
+    color: #8FA9A4 !important; -webkit-text-fill-color: #8FA9A4 !important; opacity: 1;
+}
+div[data-baseweb="input"] button { background: transparent !important; }
+div[data-baseweb="input"] button svg { fill: #5C7A75 !important; color: #5C7A75 !important; }
 
 /* main action button */
 [data-testid="stFormSubmitButton"] button,
@@ -324,15 +334,27 @@ button[data-testid="stBaseButton-secondaryFormSubmit"]:hover {
 }
 .stApp .spg-disclaimer { text-align: center; border-top: none; margin-top: 1.4rem; }
 
-/* ---------- phones ---------- */
-@media (max-width: 640px) {
-    .block-container { padding-top: 1.2rem; }
+/* ---------- phones and small tablets: stack the two panels ---------- */
+@media (max-width: 800px) {
+    .block-container { padding: 1rem 0.8rem 1.5rem 0.8rem; }
     .stApp::before, .stApp::after { display: none; }
+    [data-testid="stHorizontalBlock"] {
+        flex-direction: column !important; flex-wrap: nowrap !important;
+        border-radius: 22px;
+    }
+    [data-testid="stHorizontalBlock"] > div {
+        width: 100% !important; min-width: 100% !important; flex: 0 0 auto !important;
+    }
     [data-testid="stHorizontalBlock"] > div:first-child,
-    [data-testid="stHorizontalBlock"] > div:last-child { padding: 1.8rem 1.5rem; }
-    .auth-logo { margin-bottom: 1.6rem; }
-    .auth-brand h1 { font-size: 1.7rem; }
+    [data-testid="stHorizontalBlock"] > div:last-child { padding: 1.6rem 1.4rem; }
+    [data-testid="stHorizontalBlock"] > div:first-child::before {
+        width: 108px; height: 40px; top: 18px; right: -22px;
+    }
+    [data-testid="stHorizontalBlock"] > div:first-child::after { display: none; }
+    .auth-logo { margin-bottom: 1.4rem; }
+    .auth-brand h1 { font-size: 1.55rem; margin-bottom: 0; }
     .auth-brand p.lead, .auth-feature, .auth-note { display: none; }
+    .auth-title { font-size: 1.5rem; }
 }
 </style>
 """
