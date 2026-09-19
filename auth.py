@@ -413,63 +413,82 @@ section[data-testid="stSidebar"],
 .auth-title { font-size: 1.8rem; font-weight: 800; color: var(--a-title); letter-spacing: -0.2px; margin-bottom: 0.25rem; }
 .auth-sub   { font-size: 0.95rem; color: var(--a-sub); margin-bottom: 1.4rem; }
 
-/* tabs -> pill switch (removes Streamlit's red underline) */
+/* tabs -> pill switch (removes Streamlit's red underline).
+   Selectors cover both old (data-baseweb) and new (role="tab") Streamlit versions. */
 [data-baseweb="tab-highlight"],
 [data-baseweb="tab-border"] { display: none !important; }
-[data-baseweb="tab-list"] {
+[role="tablist"]::before,
+[role="tablist"]::after { display: none !important; }
+[role="tablist"] {
     gap: 4px; padding: 5px; background: var(--a-tab-bg) !important; border-radius: 14px;
+    border: none !important; box-shadow: none !important;
 }
-[data-baseweb="tab-list"] button[data-baseweb="tab"] {
+[role="tablist"] button[role="tab"] {
     flex: 1; height: 44px; justify-content: center;
     border-radius: 10px; background: transparent !important;
+    border: none !important; box-shadow: none !important;
 }
-[data-baseweb="tab-list"] button[data-baseweb="tab"] p,
-[data-baseweb="tab-list"] button[data-baseweb="tab"] div {
+[role="tablist"] button[role="tab"]::before,
+[role="tablist"] button[role="tab"]::after { display: none !important; }
+/* tab text colour: this is what was invisible (white on white) */
+[role="tablist"] button[role="tab"],
+[role="tablist"] button[role="tab"] * {
     color: var(--a-tab-text) !important; font-weight: 700; font-size: 0.97rem;
 }
-[data-baseweb="tab-list"] button[aria-selected="true"] {
-    background: var(--a-tab-active-bg) !important; box-shadow: var(--a-tab-shadow);
+[role="tablist"] button[role="tab"][aria-selected="true"] {
+    background: var(--a-tab-active-bg) !important; box-shadow: var(--a-tab-shadow) !important;
 }
-[data-baseweb="tab-list"] button[aria-selected="true"] p,
-[data-baseweb="tab-list"] button[aria-selected="true"] div { color: var(--a-tab-active-text) !important; }
-[data-baseweb="tab-panel"] { padding-top: 1.3rem; }
+[role="tablist"] button[role="tab"][aria-selected="true"],
+[role="tablist"] button[role="tab"][aria-selected="true"] * { color: var(--a-tab-active-text) !important; }
+[role="tabpanel"], [data-baseweb="tab-panel"] { padding-top: 1.3rem; }
 [data-testid="stForm"] { border: none !important; padding: 0 !important; background: transparent !important; }
 
-/* inputs */
+/* inputs (selectors cover old + new Streamlit) */
 [data-testid="stWidgetLabel"] p,
 [data-testid="stTextInput"] label p { color: var(--a-label) !important; font-weight: 600; font-size: 0.9rem; }
+[data-testid="stTextInputRootElement"],
 div[data-baseweb="input"] {
     background: var(--a-input-bg) !important;
     border: 1.5px solid var(--a-input-border) !important;
     border-radius: 12px !important;
     min-height: 48px;
+    box-shadow: none !important;
     transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
+[data-testid="stTextInputRootElement"]:focus-within,
 div[data-baseweb="input"]:focus-within {
     background: var(--a-input-focus-bg) !important;
     border-color: #2FBFA1 !important;
     box-shadow: 0 0 0 4px rgba(47,191,161,0.18) !important;
 }
+/* inner wrappers: no second background / second border */
+[data-testid="stTextInputRootElement"] > div,
+[data-testid="stTextInputRootElement"] div[data-baseweb="base-input"],
 div[data-baseweb="input"] > div,
-div[data-baseweb="base-input"] { background: transparent !important; }
-div[data-baseweb="input"] div[data-baseweb="base-input"] input {
+div[data-baseweb="base-input"] {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+[data-testid="stTextInput"] input {
     background: transparent !important; border: none !important; box-shadow: none !important;
     color: var(--a-input-text) !important; -webkit-text-fill-color: var(--a-input-text) !important;
     caret-color: var(--a-caret); font-size: 0.97rem; padding: 0.7rem 0.9rem;
 }
-div[data-baseweb="input"] input::placeholder {
+[data-testid="stTextInput"] input::placeholder {
     color: var(--a-placeholder) !important; -webkit-text-fill-color: var(--a-placeholder) !important; opacity: 1;
 }
 /* browser autofill (saved passwords) would otherwise paint its own colour */
-div[data-baseweb="input"] input:-webkit-autofill,
-div[data-baseweb="input"] input:-webkit-autofill:focus {
+[data-testid="stTextInput"] input:-webkit-autofill,
+[data-testid="stTextInput"] input:-webkit-autofill:focus {
     -webkit-box-shadow: 0 0 0 1000px var(--a-input-bg) inset !important;
     -webkit-text-fill-color: var(--a-input-text) !important;
     caret-color: var(--a-caret);
     transition: background-color 9999s ease-out 0s;
 }
-div[data-baseweb="input"] button { background: transparent !important; }
-div[data-baseweb="input"] button svg { fill: var(--a-icon) !important; color: var(--a-icon) !important; }
+/* show/hide password (eye) button */
+[data-testid="stTextInputRootElement"] button { background: transparent !important; border: none !important; }
+[data-testid="stTextInputRootElement"] button svg { fill: var(--a-icon) !important; color: var(--a-icon) !important; }
 
 /* main action button (same teal in both modes) */
 [data-testid="stFormSubmitButton"] button,
