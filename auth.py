@@ -2,13 +2,16 @@
 auth.py
 ------------------------------------------------------------
 SPG - Smart Pharma Guider
-Sign Up / Sign In system (v2 - redesigned UI).
+Sign Up / Sign In system (v3 - automatic light / dark theme).
 
 - Users are stored in a local SQLite file (users.db).
 - Passwords are never stored as plain text: each one is salted and
   hashed with PBKDF2-HMAC-SHA256.
 - Uses only the Python standard library + Streamlit, so
   requirements.txt does not change.
+- The login page AND the logged-in app follow the phone's / browser's
+  light or dark mode automatically (prefers-color-scheme). All of it
+  lives in this file, so app.py needs no changes.
 
 Public functions (used by app.py):
     require_login()        -> shows the Sign in / Create account page
@@ -134,28 +137,185 @@ def logout():
 
 
 # ------------------------------------------------------------------
-# STYLES - login / sign-up page
+# THEME 1 - logged-in app (custom cards, headings, result boxes)
+#
+# app.py builds its colours from CSS variables (--spg-*), so in dark
+# mode we only re-define those variables. The few colours that are
+# hard-coded in app.py (borders, card headings, emergency text) get
+# their own dark override below. Light mode is left completely
+# untouched: everything here lives inside the dark media query.
+#
+# This is injected on EVERY run (login page and app), because
+# Streamlit rebuilds the page on every rerun.
+# ------------------------------------------------------------------
+APP_THEME_CSS = """
+<style>
+@media (prefers-color-scheme: dark) {
+
+    /* re-define app.py's colour variables */
+    .stApp {
+        --spg-bg: #0E1716;
+        --spg-card: #15211F;
+        --spg-text: #E3F1EE;
+        --spg-muted: #9DB8B2;
+        --spg-teal-light: #1B3A36;
+        --spg-danger-bg: #3A1714;
+    }
+
+    /* home-page feature cards */
+    .stApp .spg-card {
+        border-color: #2A3F3B !important;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.35) !important;
+    }
+    .stApp .spg-card-wrap:hover .spg-card {
+        box-shadow: 0 10px 24px rgba(0,0,0,0.5) !important;
+    }
+    .stApp .spg-card h3,
+    .stApp .feature-header h2 {
+        color: #BFEFE6 !important;
+    }
+
+    /* "Open ->" button under each card */
+    .stApp .spg-card-wrap .stButton>button {
+        border-color: #2A3F3B !important;
+        border-top-color: #2A3F3B !important;
+        color: #BFEFE6 !important;
+    }
+    .stApp .spg-card-wrap .stButton>button:hover {
+        background: var(--spg-teal-mid) !important;
+        color: #FFFFFF !important;
+    }
+
+    /* result box */
+    .stApp .result-card {
+        border-color: #2A3F3B !important;
+        border-left-color: var(--spg-accent) !important;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.35) !important;
+    }
+
+    /* emergency box: keep the red, make the text readable */
+    .stApp .emergency-card,
+    .stApp .emergency-card * {
+        color: #F5B7B1 !important;
+    }
+
+    /* small details */
+    .stApp .spg-disclaimer { border-top-color: #2A3F3B !important; }
+    .stApp section[data-testid="stSidebar"] .spg-disclaimer {
+        border-top-color: #D3E4E0 !important;   /* sidebar stays teal, as before */
+    }
+    .stApp .stTextInput>div>div>input,
+    .stApp .stTextArea textarea,
+    .stApp .stSelectbox>div>div {
+        border-color: #2F4642 !important;
+    }
+}
+</style>
+"""
+
+
+# ------------------------------------------------------------------
+# THEME 2 - login / sign-up page
+#
+# Every colour is a variable (--a-*). Light values first, then the
+# dark values inside the media query. To change a login colour later,
+# change it in ONE place below.
 # ------------------------------------------------------------------
 AUTH_CSS = """
 <style>
-:root, .stApp { color-scheme: light !important; }
+/* let the browser draw native bits (scrollbar, autofill, eye icon) in the right mode */
+:root, .stApp { color-scheme: light dark; }
+
+/* ================= LIGHT MODE COLOURS (default) ================= */
+:root {
+    --a-page:        #F3FAF8;
+    --a-glow-1:      #D3F0E8;
+    --a-glow-1-t:    rgba(211,240,232,0);
+    --a-glow-2:      #C9E9E1;
+    --a-glow-2-t:    rgba(201,233,225,0);
+    --a-cap-1:       #A6DFD1;
+    --a-cap-2:       #E4F3F0;
+
+    --a-card:        #FFFFFF;
+    --a-card-border: #E3ECEA;
+    --a-card-shadow: 0 30px 60px -24px rgba(11,61,58,0.40), 0 8px 20px rgba(15,94,86,0.08);
+
+    --a-title:       #0B3D3A;
+    --a-sub:         #5C7A75;
+    --a-label:       #16302C;
+
+    --a-tab-bg:          #E4F3F0;
+    --a-tab-text:        #5C7A75;
+    --a-tab-active-bg:   #FFFFFF;
+    --a-tab-active-text: #0F5E56;
+    --a-tab-shadow:      0 2px 8px rgba(15,94,86,0.16);
+
+    --a-input-bg:        #F7FAF9;
+    --a-input-border:    #D3E4E0;
+    --a-input-focus-bg:  #FFFFFF;
+    --a-input-text:      #16302C;
+    --a-placeholder:     #8FA9A4;
+    --a-icon:            #5C7A75;
+    --a-caret:           #0F5E56;
+
+    --a-trust-bg:    #E4F3F0;
+    --a-trust-text:  #0F5E56;
+}
+
+/* ================= DARK MODE COLOURS ================= */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --a-page:        #0A1211;
+        --a-glow-1:      #103631;
+        --a-glow-1-t:    rgba(16,54,49,0);
+        --a-glow-2:      #0D2C28;
+        --a-glow-2-t:    rgba(13,44,40,0);
+        --a-cap-1:       #1F5A50;
+        --a-cap-2:       #16302C;
+
+        --a-card:        #121D1B;
+        --a-card-border: #263D39;
+        --a-card-shadow: 0 30px 60px -24px rgba(0,0,0,0.70), 0 8px 20px rgba(0,0,0,0.35);
+
+        --a-title:       #E3F1EE;
+        --a-sub:         #9DB8B2;
+        --a-label:       #D5E8E4;
+
+        --a-tab-bg:          #1B2B29;
+        --a-tab-text:        #9DB8B2;
+        --a-tab-active-bg:   #24413C;
+        --a-tab-active-text: #BFEFE6;
+        --a-tab-shadow:      0 2px 8px rgba(0,0,0,0.40);
+
+        --a-input-bg:        #0E1716;
+        --a-input-border:    #2F4642;
+        --a-input-focus-bg:  #0B1413;
+        --a-input-text:      #E3F1EE;
+        --a-placeholder:     #6F8C86;
+        --a-icon:            #9DB8B2;
+        --a-caret:           #2FBFA1;
+
+        --a-trust-bg:    #1B3A36;
+        --a-trust-text:  #BFEFE6;
+    }
+}
 
 /* ---------- hide sidebar on the login page ---------- */
 section[data-testid="stSidebar"],
 [data-testid="stSidebarCollapsedControl"],
 [data-testid="collapsedControl"] { display: none !important; }
 
-/* ---------- page background: soft mint glow + two floating capsules ---------- */
+/* ---------- page background: soft glow + two floating capsules ---------- */
 .stApp {
     background:
-        radial-gradient(900px 520px at 6% 0%, #D3F0E8 0%, rgba(211,240,232,0) 65%),
-        radial-gradient(820px 540px at 100% 100%, #C9E9E1 0%, rgba(201,233,225,0) 65%),
-        #F3FAF8 !important;
+        radial-gradient(900px 520px at 6% 0%, var(--a-glow-1) 0%, var(--a-glow-1-t) 65%),
+        radial-gradient(820px 540px at 100% 100%, var(--a-glow-2) 0%, var(--a-glow-2-t) 65%),
+        var(--a-page) !important;
 }
 .stApp::before, .stApp::after {
     content: ""; position: fixed; z-index: 0; pointer-events: none;
     border-radius: 999px; opacity: 0.6;
-    background: linear-gradient(90deg, #A6DFD1 50%, #E4F3F0 50%);
+    background: linear-gradient(90deg, var(--a-cap-1) 50%, var(--a-cap-2) 50%);
 }
 .stApp::before { width: 200px; height: 74px; top: 6%;    right: 3%; transform: rotate(-28deg); }
 .stApp::after  { width: 160px; height: 60px; bottom: 7%; left: 2%;  transform: rotate(32deg); }
@@ -168,14 +328,14 @@ section[data-testid="stSidebar"],
 [data-testid="stHorizontalBlock"] {
     gap: 0 !important;
     align-items: stretch !important;
-    background: #FFFFFF;
-    border: 1px solid #E3ECEA;
+    background: var(--a-card);
+    border: 1px solid var(--a-card-border);
     border-radius: 28px;
     overflow: hidden;
-    box-shadow: 0 30px 60px -24px rgba(11,61,58,0.40), 0 8px 20px rgba(15,94,86,0.08);
+    box-shadow: var(--a-card-shadow);
 }
 
-/* left column = deep teal brand panel */
+/* left column = deep teal brand panel (same in both modes) */
 [data-testid="stHorizontalBlock"] > div:first-child {
     position: relative; overflow: hidden;
     padding: 2.6rem 2.5rem;
@@ -210,7 +370,7 @@ section[data-testid="stSidebar"],
     [data-testid="stHorizontalBlock"] > div:first-child::before { animation: none; }
 }
 
-/* right column = white form panel */
+/* right column = form panel */
 [data-testid="stHorizontalBlock"] > div:last-child {
     padding: 2.6rem 2.7rem;
     display: flex; flex-direction: column; justify-content: center;
@@ -250,14 +410,14 @@ section[data-testid="stSidebar"],
 }
 
 /* ---------- form panel content ---------- */
-.auth-title { font-size: 1.8rem; font-weight: 800; color: #0B3D3A; letter-spacing: -0.2px; margin-bottom: 0.25rem; }
-.auth-sub   { font-size: 0.95rem; color: #5C7A75; margin-bottom: 1.4rem; }
+.auth-title { font-size: 1.8rem; font-weight: 800; color: var(--a-title); letter-spacing: -0.2px; margin-bottom: 0.25rem; }
+.auth-sub   { font-size: 0.95rem; color: var(--a-sub); margin-bottom: 1.4rem; }
 
 /* tabs -> pill switch (removes Streamlit's red underline) */
 [data-baseweb="tab-highlight"],
 [data-baseweb="tab-border"] { display: none !important; }
 [data-baseweb="tab-list"] {
-    gap: 4px; padding: 5px; background: #E4F3F0 !important; border-radius: 14px;
+    gap: 4px; padding: 5px; background: var(--a-tab-bg) !important; border-radius: 14px;
 }
 [data-baseweb="tab-list"] button[data-baseweb="tab"] {
     flex: 1; height: 44px; justify-content: center;
@@ -265,28 +425,28 @@ section[data-testid="stSidebar"],
 }
 [data-baseweb="tab-list"] button[data-baseweb="tab"] p,
 [data-baseweb="tab-list"] button[data-baseweb="tab"] div {
-    color: #5C7A75 !important; font-weight: 700; font-size: 0.97rem;
+    color: var(--a-tab-text) !important; font-weight: 700; font-size: 0.97rem;
 }
 [data-baseweb="tab-list"] button[aria-selected="true"] {
-    background: #FFFFFF !important; box-shadow: 0 2px 8px rgba(15,94,86,0.16);
+    background: var(--a-tab-active-bg) !important; box-shadow: var(--a-tab-shadow);
 }
 [data-baseweb="tab-list"] button[aria-selected="true"] p,
-[data-baseweb="tab-list"] button[aria-selected="true"] div { color: #0F5E56 !important; }
+[data-baseweb="tab-list"] button[aria-selected="true"] div { color: var(--a-tab-active-text) !important; }
 [data-baseweb="tab-panel"] { padding-top: 1.3rem; }
 [data-testid="stForm"] { border: none !important; padding: 0 !important; background: transparent !important; }
 
-/* inputs: always light, even when the phone is in dark mode */
+/* inputs */
 [data-testid="stWidgetLabel"] p,
-[data-testid="stTextInput"] label p { color: #16302C !important; font-weight: 600; font-size: 0.9rem; }
+[data-testid="stTextInput"] label p { color: var(--a-label) !important; font-weight: 600; font-size: 0.9rem; }
 div[data-baseweb="input"] {
-    background: #F7FAF9 !important;
-    border: 1.5px solid #D3E4E0 !important;
+    background: var(--a-input-bg) !important;
+    border: 1.5px solid var(--a-input-border) !important;
     border-radius: 12px !important;
     min-height: 48px;
     transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
 div[data-baseweb="input"]:focus-within {
-    background: #FFFFFF !important;
+    background: var(--a-input-focus-bg) !important;
     border-color: #2FBFA1 !important;
     box-shadow: 0 0 0 4px rgba(47,191,161,0.18) !important;
 }
@@ -294,16 +454,24 @@ div[data-baseweb="input"] > div,
 div[data-baseweb="base-input"] { background: transparent !important; }
 div[data-baseweb="input"] div[data-baseweb="base-input"] input {
     background: transparent !important; border: none !important; box-shadow: none !important;
-    color: #16302C !important; -webkit-text-fill-color: #16302C !important;
-    caret-color: #0F5E56; font-size: 0.97rem; padding: 0.7rem 0.9rem;
+    color: var(--a-input-text) !important; -webkit-text-fill-color: var(--a-input-text) !important;
+    caret-color: var(--a-caret); font-size: 0.97rem; padding: 0.7rem 0.9rem;
 }
 div[data-baseweb="input"] input::placeholder {
-    color: #8FA9A4 !important; -webkit-text-fill-color: #8FA9A4 !important; opacity: 1;
+    color: var(--a-placeholder) !important; -webkit-text-fill-color: var(--a-placeholder) !important; opacity: 1;
+}
+/* browser autofill (saved passwords) would otherwise paint its own colour */
+div[data-baseweb="input"] input:-webkit-autofill,
+div[data-baseweb="input"] input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--a-input-bg) inset !important;
+    -webkit-text-fill-color: var(--a-input-text) !important;
+    caret-color: var(--a-caret);
+    transition: background-color 9999s ease-out 0s;
 }
 div[data-baseweb="input"] button { background: transparent !important; }
-div[data-baseweb="input"] button svg { fill: #5C7A75 !important; color: #5C7A75 !important; }
+div[data-baseweb="input"] button svg { fill: var(--a-icon) !important; color: var(--a-icon) !important; }
 
-/* main action button */
+/* main action button (same teal in both modes) */
 [data-testid="stFormSubmitButton"] button,
 button[data-testid="stBaseButton-secondaryFormSubmit"],
 button[kind="secondaryFormSubmit"] {
@@ -329,8 +497,8 @@ button[data-testid="stBaseButton-secondaryFormSubmit"]:hover {
 
 .auth-trust {
     margin-top: 1.2rem; padding: 0.75rem 0.95rem;
-    background: #E4F3F0; border-radius: 12px;
-    font-size: 0.82rem; line-height: 1.45; color: #0F5E56;
+    background: var(--a-trust-bg); border-radius: 12px;
+    font-size: 0.82rem; line-height: 1.45; color: var(--a-trust-text);
 }
 .stApp .spg-disclaimer { text-align: center; border-top: none; margin-top: 1.4rem; }
 
@@ -518,6 +686,10 @@ def _render_auth_page():
 
 def require_login() -> dict:
     """Call once, right after the CSS is injected in app.py."""
+    # Dark-mode colours for the app. Must run on every rerun, whether the
+    # user is logged in or not, so it comes before the login check.
+    st.markdown(APP_THEME_CSS, unsafe_allow_html=True)
+
     user = st.session_state.get("user")
     if user:
         return user
