@@ -314,9 +314,9 @@ with st.sidebar:
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-        render_sidebar_user()
+    render_sidebar_user()
 
-        st.markdown("---")
+    st.markdown("---")
 
     st.markdown(
         '<div class="spg-disclaimer">SPG provides general educational '
